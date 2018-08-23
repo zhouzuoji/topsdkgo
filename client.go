@@ -12,6 +12,7 @@ import (
 
 type Client struct {
 	App
+	UriNormal, UriBatch string
 }
 
 type NewSession struct {
@@ -71,7 +72,7 @@ func MissingMethod(format ResponseFormat) string {
 }
 
 func (self *Client) CallMethod(uri, AccessToken, method string, paramsMap IParameterMap,
-	signMeth SignMethod, respFmt ResponseFormat) (body string, err error) {
+	respFmt ResponseFormat) (body string, err error) {
 	if len(self.Key) == 0 {
 		return MissingAppKey(respFmt), nil
 	}
@@ -80,21 +81,28 @@ func (self *Client) CallMethod(uri, AccessToken, method string, paramsMap IParam
 		return MissingMethod(respFmt), nil
 	}
 
-	formData := BuildParams(self.Key, self.Secret, AccessToken, method, nil, paramsMap, signMeth, respFmt)
-	return HttpPost(uri, "application/x-www-form-urlencoded", formData)
+	formData := BuildParams(self.Key, self.Secret, AccessToken, method, nil, paramsMap, respFmt)
+	fmt.Println(formData)
+	var url string
+	if len(uri) > 0 {
+		url = uri
+	} else {
+		url = self.UriNormal
+	}
+	return HttpPost(url, "application/x-www-form-urlencoded", formData)
 }
 
 func (self *Client) CallMethodEx(uri, method string, ssn *Session, params IParameterMap,
-	signMeth SignMethod, respFmt ResponseFormat) (body string, err error) {
-	body, err = self.CallMethod(uri, ssn.AccessToken, method, params, signMeth, respFmt)
+	respFmt ResponseFormat) (body string, err error) {
+	body, err = self.CallMethod(uri, ssn.AccessToken, method, params, respFmt)
 	return
 }
 
 func (self *Client) DoRequest(uri, AccessToken string, request interface{},
-	signMeth SignMethod, respFmt ResponseFormat) (body string, err error) {
+	respFmt ResponseFormat) (body string, err error) {
 	params := Struct2Map(request)
-	method := methodName(request)
-	body, err = self.CallMethod(uri, AccessToken, (method), params, signMeth, respFmt)
+	method := MethodName(request)
+	body, err = self.CallMethod(uri, AccessToken, (method), params, respFmt)
 	return
 }
 
@@ -117,7 +125,7 @@ func encodeParameterMap(writer *bytes.Buffer, params IParameterMap) {
 }
 
 func (self *Client) DoBatch(uri, AccessToken string, requests []IParameterMap,
-	signMeth SignMethod, respFmt ResponseFormat) (body string, err error) {
+	respFmt ResponseFormat) (body string, err error) {
 	var writer = &bytes.Buffer{}
 	encodeParameterMap(writer, requests[0])
 	for i := 1; i < len(requests); i++ {
@@ -126,16 +134,22 @@ func (self *Client) DoBatch(uri, AccessToken string, requests []IParameterMap,
 	}
 	payload := writer.String()
 	queryString := BuildParams(self.Key, self.Secret, AccessToken, "",
-		[]byte(payload), nil, signMeth, respFmt)
-	return HttpPost(uri+"?"+queryString, "text/plain;charset=UTF-8", payload)
+		[]byte(payload), nil, respFmt)
+	var url string
+	if len(uri) > 0 {
+		url = uri
+	} else {
+		url = self.UriBatch
+	}
+	return HttpPost(url+"?"+queryString, "text/plain;charset=UTF-8", payload)
 }
 
 func (self *Client) DoBatchEx(uri, AccessToken string, requests []interface{},
-	signMeth SignMethod, respFmt ResponseFormat) (body string, err error) {
+	respFmt ResponseFormat) (body string, err error) {
 	paramMaps := make([]IParameterMap, len(requests))
 	for i, v := range requests {
 		paramMaps[i] = Struct2Map(v)
-		paramMaps[i].Set("method", methodName(v))
+		paramMaps[i].Set("method", MethodName(v))
 	}
-	return self.DoBatch(uri, AccessToken, paramMaps, signMeth, respFmt)
+	return self.DoBatch(uri, AccessToken, paramMaps, respFmt)
 }

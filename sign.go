@@ -75,7 +75,7 @@ func Sign(form IParameterMap, secret string, payload []byte) string {
 }
 
 func BuildParams(appkey, secret, AccessToken, method string, payload []byte, params IParameterMap,
-	signMeth SignMethod, respFmt ResponseFormat) string {
+	respFmt ResponseFormat) string {
 	n := 5
 	if params != nil {
 		n += params.Len()
@@ -103,13 +103,18 @@ func BuildParams(appkey, secret, AccessToken, method string, payload []byte, par
 		allParams[3].Value = "xml"
 	}
 
-	allParams[4].Key = "sign_method"
-	if Md5Sign == signMeth {
-		allParams[4].Value = "md5"
+	i := 4
+	signMethName, _ := params.Get("sign_method")
+
+	var signMeth SignMethod = HmacSign
+	if signMethName != "" {
+		signMeth = SignMethodFromName(signMethName)
 	} else {
-		allParams[4].Value = "hmac"
+		allParams[i].Key = "sign_method"
+		allParams[i].Value = "hmac"
+		i++
 	}
-	i := 5
+
 	if len(method) > 0 {
 		allParams[i].Key = "method"
 		allParams[i].Value = method

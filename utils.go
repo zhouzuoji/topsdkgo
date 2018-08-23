@@ -23,6 +23,10 @@ type IParameterMap interface {
 
 type ParameterMap map[string]string
 
+func NewParameterMap(capacity int) ParameterMap {
+	return make(ParameterMap, capacity)
+}
+
 func (self ParameterMap) Len() int {
 	return len(self)
 }
@@ -153,7 +157,7 @@ func Struct2Map(obj interface{}) (ans ParameterMap) {
 	return ans
 }
 
-func methodName(request interface{}) string {
+func MethodName(request interface{}) string {
 	t := reflect.TypeOf(request)
 	if t.Kind() != reflect.Struct {
 		return ""

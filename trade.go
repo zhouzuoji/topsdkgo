@@ -22,7 +22,7 @@ type Order struct {
 	Cid          uint64 `json:"cid"`
 	Num          uint   `json:"num"`
 	NumIid       uint64 `json:"num_iid"`
-	Id           string `json:"oid"`
+	Oid          uint64 `json:"oid"`
 	OuterIid     string `json:"outer_iid"`
 	Payment      string `json:"payment"`
 	Price        string `json:"price"`
@@ -37,7 +37,7 @@ type Orders struct {
 }
 
 type Trade struct {
-	Tid              string `json:"tid"`
+	Tid              uint64 `json:"tid"`
 	SellerNick       string `json:"seller_nick"`
 	BuyerNick        string `json:"buyer_nick"`
 	Created          string `json:"created"`
@@ -67,4 +67,12 @@ type TradesSoldGetResponseRoot struct {
 
 type TradesSoldGetResponse struct {
 	TradesSoldGetResponseRoot `json:"trades_sold_get_response"`
+}
+
+type TradeFullinfoGetResponseRoot struct {
+	Trade `json:"trade"`
+}
+
+type TradeFullinfoGetResponse struct {
+	TradeFullinfoGetResponseRoot `json:"trade_fullinfo_get_response"`
 }
